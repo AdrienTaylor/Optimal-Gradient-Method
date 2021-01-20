@@ -1,4 +1,4 @@
-clc; clear all;
+clear all;
 % In this code, we reproduce exactly the design procedure presented in
 % Section 3.3 of the paper.
 
@@ -8,7 +8,8 @@ clc; clear all;
 verbose = 0; % let solver talk?
 N       = 5;
 L       = 1;
-m       = 0;
+m       = .1;
+
 % (A) for reproducing results from section 3.4.1, set to cw=1, cf=0
 % (B) for reproducing results from section 3.4.2, set to cw=0, cf=1
 cw      = 1;    
@@ -47,7 +48,7 @@ end
 
 % define S'': (we do not symmetrize it here, but only later, for
 % simplicity)
-Spp = tau * (cw+m/2*cf)*(w0*w0');
+Spp = tau * (cw+m/2*cf)*(w0*w0')+ 1/2/L*(g(N)*g(N)'+m*wN*g(N)'+m*g(N)*wN');% - m*(1-m/L)/2 *wN*wN';
 for i = 0:N
     Spp = Spp + lams_i(i)/2/(L-m)*g(i)*g(i)';
 end
@@ -94,7 +95,7 @@ for i = 0:N-1
 end
 
 S = symmetrize(Spp);
-bigS = [S sqrt(m)*wN; sqrt(m)*wN' 2];
+bigS = [S sqrt(m*(1-m/L))*wN; sqrt(m*(1-m/L))*wN' 2];
 cons = (bigS >= 0);
 
 linEq = tau*cf * f(0) - f(N);

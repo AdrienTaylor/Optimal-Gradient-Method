@@ -1,4 +1,5 @@
-clc; clear all;
+%clc;
+clear all;
 % In this code, we reproduce exactly the design procedure presented in
 % Section 3.3 of the paper.
 
@@ -6,11 +7,9 @@ clc; clear all;
 
 % PARAMETERS TO BE TUNED 
 verbose = 0; % let solver talk?
-N       = 2;
+N       = 5;
 L       = 1;
 m       = .1;
-cw = 1;
-cf = 0;
 
 % END OF TUNABLE ZONE
 kappa = m/L;
