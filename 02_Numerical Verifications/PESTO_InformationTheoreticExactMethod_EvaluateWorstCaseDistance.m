@@ -37,7 +37,7 @@ for i = 1:N
 end
 Ak  	= @(k)(Akv(k+1));
 betak  	= @(k)(Ak(k)/(1-kappa)/Ak(k+1));
-etak 	= @(k)(1/2 * ( (1-kappa)^2*Ak(k+1) -(1+kappa)*Ak(k))/(1+kappa+kappa*Ak(k)) );
+deltak 	= @(k)(1/2 * ( (1-kappa)^2*Ak(k+1) -(1+kappa)*Ak(k))/(1+kappa+kappa*Ak(k)) );
 
 % Iterates
 y = cell(N+1,1);% store iterates in a cell
@@ -54,7 +54,7 @@ for i=0:N-1
     y{i+1}  = betak(i) * x{i+1} + (1-betak(i)) * z{i+1};
     [g{i+1},f{i+1}] = F.oracle(y{i+1});
     x{i+2}  = y{i+1} - 1/L * g{i+1};
-    z{i+2}  = z{i+1} + kappa*etak(i) * ( y{i+1} - z{i+1}) - etak(i)/L * g{i+1};
+    z{i+2}  = (1-kappa*deltak(i))*z{i+1} + kappa*deltak(i) * y{i+1} - deltak(i)/L * g{i+1};
 end
 
 % (4) Set up the performance measure
