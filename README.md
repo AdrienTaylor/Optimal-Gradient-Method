@@ -2,7 +2,7 @@
 
 This code can be used to reproduce and verify the results from the work
 
-> [1] Adrien Taylor, Yoel Drori, "An optimal gradient method for smooth (possibly strongly) convex minimization", 2021.
+> [1] Adrien Taylor, Yoel Drori, "An optimal gradient method for smooth strongly convex minimization", 2021.
 
 ## Authors
 
