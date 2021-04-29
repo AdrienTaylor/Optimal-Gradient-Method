@@ -1,6 +1,6 @@
-clear all;
+clc; clear all;
 % In this code, we reproduce exactly the design procedure presented in
-% Section 3.3 of the paper.
+% Appendix D of the paper.
 
 %% Part 1: setting up parameters and notations
 
@@ -8,10 +8,9 @@ clear all;
 verbose = 0; % let solver talk?
 N       = 5;
 L       = 1;
-m       = .1;
-
-% (A) for reproducing results from section 3.4.1, set to cw=1, cf=0
-% (B) for reproducing results from section 3.4.2, set to cw=0, cf=1
+m       = 0.1;
+% (A) for reproducing results from Appendix E.1 for (f(w_N)-f_*)/||w_0-w_*||^2, set to cw=1, cf=0
+% (B) for reproducing results from Appendix E.2 for (f(w_N)-f_*)/(f(w_0)-f_*),  set to cw=0, cf=1
 cw      = 1;    
 cf      = 0;
 
@@ -30,8 +29,8 @@ symmetrize = @(X)(1/2*(X+X')); % this is for symmetrizing the matrix S''
 % we show here a more direct way).
 
 %% Part 2: write & solve the SDP
-alpha_prime = sdpvar(N,N,'full');
-ap          = @(i,j)(alpha_prime(i,j+1)); % short cut for starting j-indexing of ap at 0
+beta = sdpvar(N,N,'full');
+bp          = @(i,j)(beta(i,j+1)); % short cut for starting j-indexing of bp at 0
 
 lambdai_ip1 = sdpvar(1,N);    % this is \lambda_{i,i+1} (i=0,...,N-1)
 lambdas_i   = sdpvar(1,N+1);  % this is \lambda_{*,i} (i=0,...,N)
@@ -43,59 +42,59 @@ tau         = sdpvar(1);
 
 wN          = w0;
 for i = 0:N-1
-    wN = wN - (ap(N,i)/L * g(i)+kappa*ap(N,i)*w0);
+    wN = wN - (bp(N,i)/L * g(i)+kappa*bp(N,i)*w0);
 end
 
-% define S'': (we do not symmetrize it here, but only later, for
+% define \bar{S}'': (we do not symmetrize it here, but only later, for
 % simplicity)
-Spp = tau * (cw+m/2*cf)*(w0*w0')+ 1/2/L*(g(N)*g(N)'+m*wN*g(N)'+m*g(N)*wN');% - m*(1-m/L)/2 *wN*wN';
+Sbar_pp = tau * (cw+m/2*cf)*(w0*w0');
 for i = 0:N
-    Spp = Spp + lams_i(i)/2/(L-m)*g(i)*g(i)';
+    Sbar_pp = Sbar_pp + lams_i(i)/2/(L-m)*g(i)*g(i)';
 end
 for i = 0:N-1
-    Spp = Spp + lami_ip1(i)/2/(L-m)*(g(i)-g(i+1))*(g(i)-g(i+1))';
+    Sbar_pp = Sbar_pp + lami_ip1(i)/2/(L-m)*(g(i)-g(i+1))*(g(i)-g(i+1))';
 end
-Spp = Spp - lams_i(0) * g(0)*w0';
+Sbar_pp = Sbar_pp - lams_i(0) * g(0)*w0';
 
 for i = 1:N-1
     coef = lami_ip1(i);
     for j = 0:i-1
-        coef = coef - kappa * ap(i,j);
+        coef = coef - kappa * bp(i,j);
     end
-    Spp = Spp - coef * g(i)*w0';
+    Sbar_pp = Sbar_pp - coef * g(i)*w0';
 end
 
 for i = 1:N-1
     for j = 0:i-1
-        Spp = Spp + ap(i,j)/L * (g(i)*g(j)');
+        Sbar_pp = Sbar_pp + bp(i,j)/L * (g(i)*g(j)');
     end
 end
 
 coef = 1;
 for j = 0:N-1
-    coef = coef - kappa * ap(N,j);
+    coef = coef - kappa * bp(N,j);
 end
-Spp = Spp - coef * g(N)*w0';
+Sbar_pp = Sbar_pp - coef * g(N)*w0';
 
 for j=0:N-1
-    Spp = Spp + ap(N,j) * g(N)*g(j)';
+    Sbar_pp = Sbar_pp + bp(N,j) * g(N)*g(j)';
 end
 
 for i = 0:N-1
     coef = lami_ip1(i);
     for j = 0:i-1
-        coef = coef - kappa * ap(i,j);
+        coef = coef - kappa * bp(i,j);
     end
-    Spp = Spp + coef * g(i+1)*w0';
+    Sbar_pp = Sbar_pp + coef * g(i+1)*w0';
 end
 for i = 0:N-1
     for j = 0:i-1
-        Spp = Spp - ap(i,j)/L * g(i+1)*g(j)';
+        Sbar_pp = Sbar_pp - bp(i,j)/L * g(i+1)*g(j)';
     end
 end
 
-S = symmetrize(Spp);
-bigS = [S sqrt(m*(1-m/L))*wN; sqrt(m*(1-m/L))*wN' 2];
+S = symmetrize(Sbar_pp);
+bigS = [S sqrt(m)*wN; sqrt(m)*wN' 2];
 cons = (bigS >= 0);
 
 linEq = tau*cf * f(0) - f(N);
@@ -119,9 +118,9 @@ alpha = zeros(N,N);
 for i = 1:N
     for j = 1:i
         if i == N
-            alpha(i,j) = double(alpha_prime(i,j));
+            alpha(i,j) = double(beta(i,j));
         else
-            alpha(i,j) = double(alpha_prime(i,j)/lami_ip1(i));
+            alpha(i,j) = double(beta(i,j)/lami_ip1(i));
         end
     end
 end
@@ -161,7 +160,7 @@ fprintf('Worst-case guarantee of the optimized step sizes:\n');
 fprintf(' (f(w_N)-f_*) / (c_w || w_0-w_*||^2 + c_f (f(w_0)-f_*)) <= %6.5f [with cw=%3.2f, cf=%3.2f]\n',double(tau),cw,cf)
 fprintf('Step sizes (using notations w_k = w_{k-1} - sum_i h_{k,i} f''(w_i))\n');
 h
-fprintf('Aggregated step sizes (using notations w_k = w_0 - sum_i h_{k,i} f''(w_i))\n');
+fprintf('Aggregated step sizes (using notations w_k = w_0 - sum_i h_aggr_{k,i} f''(w_i))\n');
 h_aggr
 fprintf('Step sizes (using alpha''s notations, see paper)\n');
 alpha

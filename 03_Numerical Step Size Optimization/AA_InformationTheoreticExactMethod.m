@@ -1,7 +1,7 @@
 %clc;
 clear all;
 % In this code, we reproduce exactly the design procedure presented in
-% Section 3.3 of the paper.
+% Section 3.5 of the paper.
 
 %% Part 1: setting up parameters and notations
 
@@ -27,8 +27,8 @@ symmetrize = @(X)(1/2*(X+X')); % this is for symmetrizing the matrix S''
 
 %% Part 2: write & solve the SDP
 if N > 1 % we follow the same steps as in the paper, here (case N == 1 below)
-    alpha_prime = sdpvar(N,N,'full');
-    ap          = @(i,j)(alpha_prime(i,j+1)); % short cut for starting j-indexing of ap at 0
+    beta = sdpvar(N,N,'full');
+    ap          = @(i,j)(beta(i,j+1)); % short cut for starting j-indexing of ap at 0
     
     lambdai_ip1 = sdpvar(1,N-1);% this is \lambda_{i,i+1} (i=0,...,N-2)
     lambdas_i   = sdpvar(1,N);  % this is \lambda_{*,i} (i=0,...,N-1)
@@ -113,9 +113,9 @@ else % if N == 1, the SDP is simpler
     tau     = sdpvar(1);
     lamS0   = sdpvar(1); % this is lambda_{*,0}
     lam0S   = sdpvar(1); % this is lambda_{0,*}
-    alpha_prime = sdpvar(1);
+    beta = sdpvar(1);
     
-    w1      = w0 * (1-kappa*alpha_prime) - alpha_prime * g(0);
+    w1      = w0 * (1-kappa*beta) - beta * g(0);
     
     LMI_cons = tau * w0*w0'  + lam0S/2/(L-m) * g(N-1)*g(N-1)'+lamS0/2 * g(0)*g(0)'/(L-m)-lamS0/2 * (w0*g(0)'+g(0)*w0');
     LIN_cons = -lam0S * f(0) + lamS0 * f(0);
@@ -139,11 +139,11 @@ alpha = zeros(N,N);
 for i = 1:N
     for j = 1:i
         if i == N
-            alpha(i,j) = double(alpha_prime(i,j));
+            alpha(i,j) = double(beta(i,j));
         elseif i==N-1
-            alpha(i,j) = double(alpha_prime(i,j)/lamN_s);
+            alpha(i,j) = double(beta(i,j)/lamN_s);
         else
-            alpha(i,j) = double(alpha_prime(i,j)/lami_ip1(i));
+            alpha(i,j) = double(beta(i,j)/lami_ip1(i));
         end
     end
 end
@@ -183,7 +183,7 @@ fprintf('Worst-case guarantee of the optimized step sizes:\n');
 fprintf(' ||w_N-w_*||^2 / || w_0-w_*||^2 <= %6.5f \n',double(tau))
 fprintf('Step sizes (using notations w_k = w_{k-1} - sum_i h_{k,i} f''(w_i))\n');
 h
-fprintf('Aggregated step sizes (using notations w_k = w_0 - sum_i h_{k,i} f''(w_i))\n');
+fprintf('Aggregated step sizes (using notations w_k = w_0 - sum_i h_aggr_{k,i} f''(w_i))\n');
 h_aggr
 fprintf('Step sizes (using alpha''s notations, see paper)\n');
 alpha
